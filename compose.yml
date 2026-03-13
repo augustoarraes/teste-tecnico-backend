@@ -1,0 +1,90 @@
+version: "3.8"
+
+services:
+  # ──────────────────────────────────────────────
+  # PostgreSQL — Banco de dados principal
+  # ──────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: teste-tecnico-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: teste_tecnico
+      TZ: America/Fortaleza
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - myde-network 
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ──────────────────────────────────────────────
+  # LocalStack — Simula AWS SQS
+  # ──────────────────────────────────────────────
+  localstack:
+    image: localstack/localstack:3.0
+    container_name: teste-tecnico-localstack
+    environment:
+      SERVICES: sqs
+      DEFAULT_REGION: us-east-1
+    ports:
+      - "4566:4566"
+    volumes:
+      - ./localstack-init:/etc/localstack/init/ready.d
+    networks:
+      - myde-network 
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ──────────────────────────────────────────────
+  # Mock Bank Server — API bancária simulada
+  # ──────────────────────────────────────────────
+  mock-bank:
+    build:
+      context: ./mock-bank-server
+    container_name: teste-tecnico-mock-bank
+    environment:
+      WEBHOOK_CALLBACK_URL: "http://host.docker.internal:8000/api/webhooks/bank-callback"
+      PROCESSING_DELAY_MIN: "2"
+      PROCESSING_DELAY_MAX: "5"
+      ERROR_RATE: "0.1"
+    ports:
+      - "8001:8001"
+    networks:
+      - myde-network 
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # ──────────────────────────────────────────────
+  # API-credito — API de Gerenciamento de Propostas de Crédito
+  # ──────────────────────────────────────────────
+  api-credito:
+    build: 
+      context: ./api-credito
+      dockerfile: Dockerfile
+    image: teste-tecnico-api-credito
+    container_name: teste-tecnico-api-credito
+    ports:
+      - 8000:8000
+    depends_on:
+      - postgres
+    volumes: 
+      - ./api-credito:/app
+    networks:
+      - myde-network    
+
+volumes:
+  pgdata:
+
+networks: 
+  myde-network:
+    driver: bridge

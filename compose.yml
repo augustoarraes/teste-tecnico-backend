@@ -80,7 +80,23 @@ services:
     volumes: 
       - ./api-credito:/app
     networks:
-      - myde-network    
+      - myde-network
+
+  worker:
+    build:
+      context: ./api-credito
+      dockerfile: Dockerfile
+    image: teste-tecnico-worker
+    container_name: teste-tecnico-worker
+    depends_on:
+      - postgres
+      - localstack
+      - mock-bank
+    volumes:
+      - ./api-credito:/app
+    networks:
+      - myde-network
+    command: ["python", "-m", "integration.sqs_worker"]
 
 volumes:
   pgdata:

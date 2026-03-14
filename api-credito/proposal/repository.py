@@ -76,3 +76,110 @@ def submit_proposal(*, tenant_id: UUID, proposal_id: UUID,) -> Proposal | None:
     session.commit()
     session.refresh(proposal)
     return proposal
+
+
+def set_proposal_processing(*, tenant_id: UUID, proposal_id: UUID, external_protocol: str,) -> Proposal | None:
+    proposal = (
+        session.query(Proposal)
+        .filter(
+            Proposal.id == proposal_id,
+            Proposal.tenant_id == tenant_id,
+        )
+        .first()
+    )
+
+    if not proposal:
+        return None
+
+    proposal.external_protocol = external_protocol
+    proposal.status = "processing"
+
+    session.commit()
+    session.refresh(proposal)
+    return proposal
+
+
+def mark_proposal_submitted(*, tenant_id: UUID, proposal_id: UUID, external_protocol: str | None = None,) -> Proposal | None:
+    proposal = (
+        session.query(Proposal)
+        .filter(
+            Proposal.id == proposal_id,
+            Proposal.tenant_id == tenant_id,
+        )
+        .first()
+    )
+
+    if not proposal:
+        return None
+
+    proposal.type = "proposta"
+    proposal.status = "submitted"
+
+    if external_protocol:
+        proposal.external_protocol = external_protocol
+
+    session.commit()
+    session.refresh(proposal)
+    return proposal
+
+
+def update_proposal_bank_status(*, tenant_id: UUID, proposal_id: UUID, status: str, bank_response: dict | None = None,) -> Proposal | None:
+    proposal = (
+        session.query(Proposal)
+        .filter(
+            Proposal.id == proposal_id,
+            Proposal.tenant_id == tenant_id,
+        )
+        .first()
+    )
+
+    if not proposal:
+        return None
+
+    proposal.status = status
+
+    if bank_response is not None:
+        proposal.bank_response = bank_response
+
+    session.commit()
+    session.refresh(proposal)
+    return proposal
+
+
+def mark_proposal_processing(*, tenant_id: UUID, proposal_id: UUID, ) -> Proposal | None:
+    proposal = (
+        session.query(Proposal)
+        .filter(
+            Proposal.id == proposal_id,
+            Proposal.tenant_id == tenant_id,
+        )
+        .first()
+    )
+
+    if not proposal:
+        return None
+
+    proposal.status = "processing"
+    session.commit()
+    session.refresh(proposal)
+    return proposal
+
+
+def set_external_protocol(*, tenant_id: UUID, proposal_id: UUID, external_protocol: str,) -> Proposal | None:
+    proposal = (
+        session.query(Proposal)
+        .filter(
+            Proposal.id == proposal_id,
+            Proposal.tenant_id == tenant_id,
+        )
+        .first()
+    )
+
+    if not proposal:
+        return None
+
+    proposal.external_protocol = external_protocol
+    session.commit()
+    session.refresh(proposal)
+    return proposal
+

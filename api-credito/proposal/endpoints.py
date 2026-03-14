@@ -6,7 +6,7 @@ from core.repository import session
 from auth.dependencies import get_current_user
 from auth.dto import AuthenticatedUser
 from proposal.dto import ProposalSimulateInput, ProposalOutput, ProposalListOutput
-from proposal.service import simulate_proposal, list_proposals, get_proposal_by_id, submit_proposal
+from proposal.service import simulate_proposal, list_proposals, get_proposal_by_id, submit_proposal, cancel_proposal
 
 
 app = APIRouter(prefix="/api/proposals", tags=["Proposals"])
@@ -51,3 +51,7 @@ def get_proposal_by_id_endpoint(
 def submit_proposal_endpoint(proposal_id: UUID, current_user: AuthenticatedUser = Depends(get_current_user),):
     return submit_proposal(current_user=current_user, proposal_id=proposal_id,)
 
+
+@app.post( "/{proposal_id}/cancel", response_model=ProposalOutput, status_code=status.HTTP_200_OK,)
+def cancel_proposal_endpoint(proposal_id: UUID, current_user: AuthenticatedUser = Depends(get_current_user),):
+    return cancel_proposal(current_user=current_user, proposal_id=proposal_id,)

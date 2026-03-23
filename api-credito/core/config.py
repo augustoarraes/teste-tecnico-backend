@@ -5,7 +5,7 @@ class Settings:
     APP_NAME: str = os.getenv("APP_NAME", "API Crédito")
     JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "change-me-in-production")
     JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")
-    JWT_EXPIRE_MINUTES: int = int(os.getenv("JWT_EXPIRE_MINUTES", "60"))
+    JWT_EXPIRE_MINUTES: int = int(os.getenv("JWT_EXPIRE_MINUTES", "120"))
 
     MOCK_BANK_BASE_URL: str = os.getenv("MOCK_BANK_BASE_URL", "http://mock-bank:8001")
     WEBHOOK_CALLBACK_URL: str = os.getenv("WEBHOOK_CALLBACK_URL", "http://api-credito:8000/api/webhooks/bank-callback")

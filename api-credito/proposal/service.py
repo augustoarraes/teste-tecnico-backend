@@ -10,6 +10,8 @@ from proposal.dto import ProposalSimulateInput, ProposalListOutput
 from integration.bank_client import simulate_credit, submit_credit_proposal, get_credit_proposal_status, cancel_credit_proposal
 from integration.sqs_client import send_message
 
+TRANSIENT_STATUS = {"pending", "processing", "submitted"}
+
 
 """def simulate_proposal(current_user, payload: ProposalSimulateInput):
     client = clients_repository.get_client_by_id(
@@ -125,24 +127,29 @@ def list_proposals(current_user, *, status: str | None = None, proposal_type: st
     return proposal"""
 
 
-def map_bank_status(bank_status: str) -> str:
+def map_bank_status(proposal_type: str, bank_status: str) -> str:
+    ptype = proposal_type.lower()
     value = bank_status.lower()
 
-    if value == "approved":
-        return "approved"
+    if ptype == "simulacao":
+        if value == "approved":
+            return "simulated"
+        if value == "rejected":
+            return "simulation_failed"
+        if value == "cancelled":
+            return "cancelled"
+        return "processing"
 
-    if value == "rejected":
-        return "rejected"
-
-    if value == "cancelled":
-        return "cancelled"
-
-    if value == "simulated":
-        return "simulated"
+    if ptype == "proposta":
+        if value == "approved":
+            return "approved"
+        if value == "rejected":
+            return "rejected"
+        if value == "cancelled":
+            return "cancelled"
+        return "submitted"
 
     return "processing"
-
-TRANSIENT_STATUS = {"pending", "processing", "submitted"}
 
 
 def get_proposal_by_id(current_user, proposal_id: UUID,):
@@ -168,7 +175,7 @@ def get_proposal_by_id(current_user, proposal_id: UUID,):
 
             bank_status = bank_response.get("status")
 
-            mapped_status = map_bank_status(bank_status)
+            mapped_status = map_bank_status(proposal.type, bank_status)
 
             proposal = proposals_repository.update_proposal_bank_status(
                 tenant_id=current_user.tenant_id,
